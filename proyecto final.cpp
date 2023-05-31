@@ -1,28 +1,78 @@
 #include <iostream>
 #include <string>
+#include <vector>
 
 struct Atleta {
     std::string nombre;
     std::string nacionalidad;
     int numero;
+    std::vector<double> tiempos;
+    double promedio_tiempo;
+
+    Atleta(const std::string& nombre, const std::string& nacionalidad, int numero)
+        : nombre(nombre), nacionalidad(nacionalidad), numero(numero), promedio_tiempo(0.0) {}
 };
 
 struct NodoArbol {
-    double promedio;
     Atleta atleta;
     NodoArbol* izquierdo;
     NodoArbol* derecho;
 
-    NodoArbol(double promedio, const Atleta& atleta)
-        : promedio(promedio), atleta(atleta), izquierdo(nullptr), derecho(nullptr) {}
+    NodoArbol(const Atleta& atleta)
+        : atleta(atleta), izquierdo(nullptr), derecho(nullptr) {}
 };
 
 class ArbolAVL {
 public:
     ArbolAVL() : raiz(nullptr) {}
 
-    void Insertar(double promedio, const Atleta& atleta) {
-        raiz = InsertarNodo(raiz, promedio, atleta);
+    void Insertar(const Atleta& atleta) {
+        raiz = InsertarNodo(raiz, atleta);
+    }
+
+    void RegistrarVueltas() {
+        int numero;
+        std::cout << "Ingrese el número del corredor: ";
+        std::cin >> numero;
+        std::cin.ignore();
+
+        NodoArbol* corredor = BuscarPorNumero(raiz, numero);
+        if (corredor != nullptr) {
+            int total_vueltas;
+            std::cout << "Ingrese el número total de vueltas realizadas por el corredor: ";
+            std::cin >> total_vueltas;
+            std::cin.ignore();
+
+            std::vector<double> tiempos;
+            for (int i = 1; i <= total_vueltas; i++) {
+                double tiempo_vuelta;
+                std::cout << "Ingrese el tiempo de la vuelta " << i << " (en segundos): ";
+                std::cin >> tiempo_vuelta;
+                std::cin.ignore();
+
+                tiempos.push_back(tiempo_vuelta);
+            }
+
+            corredor->atleta.tiempos = tiempos;
+            corredor->atleta.promedio_tiempo = CalcularPromedioTiempos(tiempos);
+
+            std::cout << "Vueltas registradas correctamente." << std::endl;
+        } else {
+            std::cout << "No se encontró ningún corredor con ese número." << std::endl;
+        }
+    }
+
+    void BuscarPorNombre(const std::string& nombre) {
+        NodoArbol* corredor = BuscarPorNombre(raiz, nombre);
+        if (corredor != nullptr) {
+            std::cout << "Nombre: " << corredor->atleta.nombre << std::endl;
+            std::cout << "Nacionalidad: " << corredor->atleta.nacionalidad << std::endl;
+            std::cout << "Número: " << corredor->atleta.numero << std::endl;
+            MostrarTiempos(corredor->atleta.tiempos);
+            std::cout << "Promedio de tiempos: " << corredor->atleta.promedio_tiempo << " segundos" << std::endl;
+        } else {
+            std::cout << "No se encontró ningún corredor con ese nombre." << std::endl;
+        }
     }
 
     void MostrarPromedios() {
@@ -32,78 +82,64 @@ public:
 private:
     NodoArbol* raiz;
 
-    NodoArbol* InsertarNodo(NodoArbol* nodo, double promedio, const Atleta& atleta) {
+    NodoArbol* InsertarNodo(NodoArbol* nodo, const Atleta& atleta) {
         if (nodo == nullptr) {
-            return new NodoArbol(promedio, atleta);
+            return new NodoArbol(atleta);
         }
 
-        if (promedio < nodo->promedio) {
-            nodo->izquierdo = InsertarNodo(nodo->izquierdo, promedio, atleta);
+        if (atleta.numero < nodo->atleta.numero) {
+            nodo->izquierdo = InsertarNodo(nodo->izquierdo, atleta);
         } else {
-            nodo->derecho = InsertarNodo(nodo->derecho, promedio, atleta);
-        }
-
-        // Balancear el árbol después de la inserción
-        int balance = ObtenerBalance(nodo);
-
-        if (balance > 1 && promedio < nodo->izquierdo->promedio) {
-            return RotacionDerecha(nodo);
-        }
-
-        if (balance < -1 && promedio > nodo->derecho->promedio) {
-            return RotacionIzquierda(nodo);
-        }
-
-        if (balance > 1 && promedio > nodo->izquierdo->promedio) {
-            nodo->izquierdo = RotacionIzquierda(nodo->izquierdo);
-            return RotacionDerecha(nodo);
-        }
-
-        if (balance < -1 && promedio < nodo->derecho->promedio) {
-            nodo->derecho = RotacionDerecha(nodo->derecho);
-            return RotacionIzquierda(nodo);
+            nodo->derecho = InsertarNodo(nodo->derecho, atleta);
         }
 
         return nodo;
     }
 
-    int ObtenerBalance(NodoArbol* nodo) {
-        if (nodo == nullptr) {
-            return 0;
+    NodoArbol* BuscarPorNumero(NodoArbol* nodo, int numero) {
+        if (nodo == nullptr || nodo->atleta.numero == numero) {
+            return nodo;
         }
 
-        return AlturaNodo(nodo->izquierdo) - AlturaNodo(nodo->derecho);
+        if (numero < nodo->atleta.numero) {
+            return BuscarPorNumero(nodo->izquierdo, numero);
+        } else {
+            return BuscarPorNumero(nodo->derecho, numero);
+        }
     }
 
-    int AlturaNodo(NodoArbol* nodo) {
-        if (nodo == nullptr) {
-            return 0;
+    NodoArbol* BuscarPorNombre(NodoArbol* nodo, const std::string& nombre) {
+        if (nodo == nullptr || nodo->atleta.nombre == nombre) {
+            return nodo;
         }
 
-        int altura_izq = AlturaNodo(nodo->izquierdo);
-        int altura_der = AlturaNodo(nodo->derecho);
+        NodoArbol* resultado_izq = BuscarPorNombre(nodo->izquierdo, nombre);
+        if (resultado_izq != nullptr) {
+            return resultado_izq;
+        }
 
-        return 1 + std::max(altura_izq, altura_der);
+        NodoArbol* resultado_der = BuscarPorNombre(nodo->derecho, nombre);
+        if (resultado_der != nullptr) {
+            return resultado_der;
+        }
+
+        return nullptr;
     }
 
-    NodoArbol* RotacionDerecha(NodoArbol* nodo) {
-        NodoArbol* nuevo_raiz = nodo->izquierdo;
-        NodoArbol* temp = nuevo_raiz->derecho;
-
-        nuevo_raiz->derecho = nodo;
-        nodo->izquierdo = temp;
-
-        return nuevo_raiz;
+    double CalcularPromedioTiempos(const std::vector<double>& tiempos) {
+        double suma = 0.0;
+        for (double tiempo : tiempos) {
+            suma += tiempo;
+        }
+        return suma / tiempos.size();
     }
 
-    NodoArbol* RotacionIzquierda(NodoArbol* nodo) {
-        NodoArbol* nuevo_raiz = nodo->derecho;
-        NodoArbol* temp = nuevo_raiz->izquierdo;
-
-        nuevo_raiz->izquierdo = nodo;
-        nodo->derecho = temp;
-
-        return nuevo_raiz;
+    void MostrarTiempos(const std::vector<double>& tiempos) {
+        std::cout << "Tiempos registrados: ";
+        for (double tiempo : tiempos) {
+            std::cout << tiempo << "s ";
+        }
+        std::cout << std::endl;
     }
 
     void MostrarPromediosOrdenados(NodoArbol* nodo) {
@@ -112,7 +148,7 @@ private:
         }
 
         MostrarPromediosOrdenados(nodo->izquierdo);
-        std::cout << "Nombre: " << nodo->atleta.nombre << ", Nacionalidad: " << nodo->atleta.nacionalidad << ", Promedio: " << nodo->promedio << std::endl;
+        std::cout << "Nombre: " << nodo->atleta.nombre << ", Nacionalidad: " << nodo->atleta.nacionalidad << ", Promedio: " << nodo->atleta.promedio_tiempo << " segundos" << std::endl;
         MostrarPromediosOrdenados(nodo->derecho);
     }
 };
@@ -120,50 +156,64 @@ private:
 int main() {
     ArbolAVL arbol;
 
-    while (true) {
-        std::string nombre;
-        std::string nacionalidad;
-        int numero;
-        std::cout << "Ingrese el nombre del atleta (o 'salir' para terminar): ";
-        std::getline(std::cin, nombre);
+    int opcion;
+    do {
+        std::cout << "\n--- Menú ---" << std::endl;
+        std::cout << "1. Registrar corredor" << std::endl;
+        std::cout << "2. Registrar vueltas" << std::endl;
+        std::cout << "3. Buscar corredor por nombre" << std::endl;
+        std::cout << "4. Mostrar promedios" << std::endl;
+        std::cout << "5. Salir" << std::endl;
+        std::cout << "Ingrese una opción: ";
+        std::cin >> opcion;
+        std::cin.ignore();
 
-        if (nombre == "salir") {
-            break;
-        }
+        switch (opcion) {
+            case 1: {
+                std::string nombre;
+                std::string nacionalidad;
+                int numero;
+                std::cout << "Ingrese el nombre del corredor: ";
+                std::getline(std::cin, nombre);
 
-        std::cout << "Ingrese la nacionalidad del atleta: ";
-        std::getline(std::cin, nacionalidad);
+                std::cout << "Ingrese la nacionalidad del corredor: ";
+                std::getline(std::cin, nacionalidad);
 
-        std::cout << "Ingrese el número del atleta: ";
-        std::cin >> numero;
-        std::cin.ignore();  
+                std::cout << "Ingrese el número del corredor: ";
+                std::cin >> numero;
+                std::cin.ignore();
 
-        int total_vueltas;
-        std::cout << "Ingrese el número total de vueltas realizadas por el atleta: ";
-        std::cin >> total_vueltas;
-        std::cin.ignore();  
+                Atleta atleta(nombre, nacionalidad, numero);
+                arbol.Insertar(atleta);
 
-        if (total_vueltas >= 2) {
-            double tiempo_total = 0.0;
-            for (int i = 1; i <= total_vueltas; i++) {
-                double tiempo_vuelta;
-                std::cout << "Ingrese el tiempo de la vuelta " << i << " (en segundos): ";
-                std::cin >> tiempo_vuelta;
-                std::cin.ignore();  
-
-                tiempo_total += tiempo_vuelta;
+                std::cout << "Corredor registrado correctamente." << std::endl;
+                break;
             }
+            case 2:
+                arbol.RegistrarVueltas();
+                break;
+            case 3: {
+                std::string nombre;
+                std::cout << "Ingrese el nombre del corredor: ";
+                std::getline(std::cin, nombre);
 
-            double promedio_tiempo = tiempo_total / total_vueltas;
-            Atleta atleta{nombre, nacionalidad, numero};
-            arbol.Insertar(promedio_tiempo, atleta);
-        } else {
-            std::cout << "El atleta debe realizar al menos dos vueltas para ser considerado en el promedio." << std::endl;
+                arbol.BuscarPorNombre(nombre);
+                break;
+            }
+            case 4:
+                std::cout << "\n--- Resultados de menor promedio a mayor ---" << std::endl;
+                arbol.MostrarPromedios();
+                break;
+            case 5:
+                std::cout << "Saliendo del programa..." << std::endl;
+                break;
+            default:
+                std::cout << "Opción inválida. Intente nuevamente." << std::endl;
+                break;
         }
-    }
-
-    std::cout << "\n--- Resultados de menor promedio a mayor ---" << std::endl;
-    arbol.MostrarPromedios();
+    } while (opcion != 5);
 
     return 0;
 }
+
+
