@@ -3,6 +3,7 @@
 
 struct Atleta {
     std::string nombre;
+    std::string nacionalidad;
     int numero;
 };
 
@@ -111,7 +112,7 @@ private:
         }
 
         MostrarPromediosOrdenados(nodo->izquierdo);
-        std::cout << "Nombre: " << nodo->atleta.nombre << ", Promedio: " << nodo->promedio << std::endl;
+        std::cout << "Nombre: " << nodo->atleta.nombre << ", Nacionalidad: " << nodo->atleta.nacionalidad << ", Promedio: " << nodo->promedio << std::endl;
         MostrarPromediosOrdenados(nodo->derecho);
     }
 };
@@ -121,6 +122,7 @@ int main() {
 
     while (true) {
         std::string nombre;
+        std::string nacionalidad;
         int numero;
         std::cout << "Ingrese el nombre del atleta (o 'salir' para terminar): ";
         std::getline(std::cin, nombre);
@@ -129,14 +131,17 @@ int main() {
             break;
         }
 
+        std::cout << "Ingrese la nacionalidad del atleta: ";
+        std::getline(std::cin, nacionalidad);
+
         std::cout << "Ingrese el número del atleta: ";
         std::cin >> numero;
-        std::cin.ignore();  // Ignorar el salto de línea después de leer el número
+        std::cin.ignore();  
 
         int total_vueltas;
         std::cout << "Ingrese el número total de vueltas realizadas por el atleta: ";
         std::cin >> total_vueltas;
-        std::cin.ignore();  // Ignorar el salto de línea después de leer el número
+        std::cin.ignore();  
 
         if (total_vueltas >= 2) {
             double tiempo_total = 0.0;
@@ -144,13 +149,13 @@ int main() {
                 double tiempo_vuelta;
                 std::cout << "Ingrese el tiempo de la vuelta " << i << " (en segundos): ";
                 std::cin >> tiempo_vuelta;
-                std::cin.ignore();  // Ignorar el salto de línea después de leer el número
+                std::cin.ignore();  
 
                 tiempo_total += tiempo_vuelta;
             }
 
             double promedio_tiempo = tiempo_total / total_vueltas;
-            Atleta atleta{nombre, numero};
+            Atleta atleta{nombre, nacionalidad, numero};
             arbol.Insertar(promedio_tiempo, atleta);
         } else {
             std::cout << "El atleta debe realizar al menos dos vueltas para ser considerado en el promedio." << std::endl;
